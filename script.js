@@ -85,7 +85,8 @@ function buildSilverCoinCursor() {
 /* ── Scratch canvas ── */
 const canvas = document.getElementById('scratch-canvas');
 const ctx    = canvas.getContext('2d');
-const W = 500, H = 300;
+const W = 620, H = 420;
+const PAD = 60; // gap between canvas edge and card edge
 canvas.width  = W;
 canvas.height = H;
 
@@ -166,24 +167,38 @@ function emitDust(cx, cy) {
 }
 
 /* ── Gold texture ── */
+const CARD_W = 500, CARD_H = 300, CARD_R = 20;
+
+function cardPath() {
+  ctx.beginPath();
+  ctx.roundRect(PAD, PAD, CARD_W, CARD_H, CARD_R);
+}
+
 const goldImg = new Image();
 goldImg.src = 'Image/gold-texture.png';
 goldImg.onload = function () {
   ctx.globalCompositeOperation = 'source-over';
-  ctx.drawImage(goldImg, 0, 0, W, H);
 
-  const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.85);
+  ctx.save();
+  cardPath();
+  ctx.clip();
+
+  ctx.drawImage(goldImg, PAD, PAD, CARD_W, CARD_H);
+
+  const cx = PAD + CARD_W / 2, cy = PAD + CARD_H / 2;
+  const vig = ctx.createRadialGradient(cx, cy, CARD_H * 0.25, cx, cy, CARD_H * 0.85);
   vig.addColorStop(0, 'rgba(0,0,0,0)');
   vig.addColorStop(1, 'rgba(0,0,0,0.18)');
   ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(PAD, PAD, CARD_W, CARD_H);
 
   ctx.fillStyle    = 'rgba(80,45,0,0.72)';
   ctx.font         = '600 14px "Inter Tight", sans-serif';
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('🪙  Scratch here to reveal your prize', W / 2, H / 2);
+  ctx.fillText('🪙  Scratch here to reveal your prize', cx, cy);
 
+  ctx.restore();
   ctx.globalCompositeOperation = 'destination-out';
 };
 
@@ -261,7 +276,7 @@ function scheduleRevealCheck() {
 
 function checkReveal() {
   if (revealed) return;
-  const data  = ctx.getImageData(0, 0, W, H).data;
+  const data  = ctx.getImageData(PAD, PAD, CARD_W, CARD_H).data;
   let cleared = 0, total = 0;
   for (let i = 3; i < data.length; i += 24) {
     if (data[i] < 128) cleared++;

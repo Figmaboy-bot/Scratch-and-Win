@@ -150,10 +150,10 @@ body {
 
 #scratch-canvas {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 500px;
-  height: 300px;
+  top: -60px;
+  left: -60px;
+  width: 620px;
+  height: 420px;
   z-index: 5;
   cursor: crosshair;
 }
