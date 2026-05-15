@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scratch & Win</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #e8e8e8;
+      font-family: 'Inter Tight', sans-serif;
+    }
+
+    /* Wrapper handles the left/right cutouts */
+    .card-wrap {
+      position: relative;
+    }
+
+    /* Left and right ticket notches */
+    .card-wrap::before,
+    .card-wrap::after {
+      content: '';
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      background: #e8e8e8;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+    }
+
+    .card-wrap::before {
+      left: -36px;
+    }
+
+    .card-wrap::after {
+      right: -36px;
+    }
+
+    .card {
+      position: relative;
+      width: 500px;
+      height: 300px;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 6px 32px rgba(0, 0, 0, 0.10);
+    }
+
+    /* Full-card background blob (black corner shapes) */
+    .blob-corner {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blob-corner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Gift box character — right side */
+    .gift-outer {
+      position: absolute;
+      right: 8px;
+      top: 115px;
+      width: 215px;
+      height: 215px;
+      z-index: 1;
+    }
+
+    .gift-outer img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Text content — left side */
+    .content {
+      position: absolute;
+      left: 54px;
+      top: 44px;
+      width: 235px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .logo {
+      height: 24px;
+      width: auto;
+      display: block;
+    }
+
+    .text-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .heading {
+      font-size: 22px;
+      font-weight: 600;
+      color: #000;
+      line-height: 1.2;
+    }
+
+    .subtext {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.6);
+      line-height: 1.45;
+    }
+
+    /* Promo code pill */
+    .promo-code {
+      position: absolute;
+      left: 54px;
+      top: 224px;
+      width: 222px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1.5px dashed #00932a;
+      background: rgba(0, 147, 42, 0.02);
+      cursor: pointer;
+      user-select: none;
+      z-index: 1;
+      transition: background 0.15s ease;
+    }
+
+    .promo-code:hover {
+      background: rgba(0, 147, 42, 0.07);
+    }
+
+    .promo-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #00932a;
+      white-space: nowrap;
+      letter-spacing: 0.6px;
+    }
+
+    .copy-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: #1a1a1a;
+      color: #fff;
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 9px 18px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card-wrap">
+    <div class="card">
+
+      <!-- Background corner blobs -->
+      <div class="blob-corner">
+        <img src="https://www.figma.com/api/mcp/asset/082f750e-816e-4599-a795-3c23de591655" alt="" />
+      </div>
+
+      <!-- Gift box character -->
+      <div class="gift-outer">
+        <img src="Image/OBJECT.svg" alt="Gift box character" />
+      </div>
+
+      <!-- Text content -->
+      <div class="content">
+        <img class="logo" src="Image/Logo.svg" alt="Amazon" />
+        <div class="text-block">
+          <p class="heading">Scratch &amp; Win Big 🎉</p>
+          <p class="subtext">Scratch the ticket for a chance to win exciting rewards, cashback, and surprise gifts.</p>
+        </div>
+      </div>
+
+      <!-- Promo code -->
+      <button class="promo-code" onclick="copyCode()" aria-label="Copy promo code AMZ8942">
+        <span class="promo-text">AMZ8942</span>
+        <img class="copy-icon" src="https://www.figma.com/api/mcp/asset/8d0cf5f6-b144-47f3-894e-a3ace365bb4d"
+          alt="Copy" />
+      </button>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    function copyCode() {
+      navigator.clipboard.writeText('AMZ8942').then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    }
+  </script>
+
+</body>
+
+</html>
