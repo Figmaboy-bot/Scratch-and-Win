@@ -9,9 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -26,7 +24,6 @@
       font-family: 'Inter Tight', sans-serif;
     }
 
-    /* Wrapper handles the left/right cutouts */
     .card-wrap {
       position: relative;
     }
@@ -42,16 +39,10 @@
       border-radius: 50%;
       top: 50%;
       transform: translateY(-50%);
-      z-index: 2;
+      z-index: 10;
     }
-
-    .card-wrap::before {
-      left: -36px;
-    }
-
-    .card-wrap::after {
-      right: -36px;
-    }
+    .card-wrap::before { left: -36px; }
+    .card-wrap::after  { right: -36px; }
 
     .card {
       position: relative;
@@ -63,21 +54,18 @@
       box-shadow: 0 6px 32px rgba(0, 0, 0, 0.10);
     }
 
-    /* Full-card background blob (black corner shapes) */
     .blob-corner {
       position: absolute;
       inset: 0;
       pointer-events: none;
       z-index: 0;
     }
-
     .blob-corner img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    /* Gift box character — right side */
     .gift-outer {
       position: absolute;
       right: 8px;
@@ -86,14 +74,12 @@
       height: 215px;
       z-index: 1;
     }
-
     .gift-outer img {
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
 
-    /* Text content — left side */
     .content {
       position: absolute;
       left: 54px;
@@ -132,7 +118,6 @@
       line-height: 1.45;
     }
 
-    /* Promo code pill */
     .promo-code {
       position: absolute;
       left: 54px;
@@ -150,10 +135,7 @@
       z-index: 1;
       transition: background 0.15s ease;
     }
-
-    .promo-code:hover {
-      background: rgba(0, 147, 42, 0.07);
-    }
+    .promo-code:hover { background: rgba(0, 147, 42, 0.07); }
 
     .promo-text {
       font-size: 13px;
@@ -170,7 +152,17 @@
       opacity: 0.8;
     }
 
-    /* Toast */
+    /* Scratch canvas — no border-radius; parent overflow:hidden clips it */
+    #scratch-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 500px;
+      height: 300px;
+      z-index: 5;
+      cursor: crosshair; /* overridden by JS with coin data-URL */
+    }
+
     .toast {
       position: fixed;
       bottom: 32px;
@@ -188,7 +180,6 @@
       pointer-events: none;
       white-space: nowrap;
     }
-
     .toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
@@ -201,17 +192,14 @@
   <div class="card-wrap">
     <div class="card">
 
-      <!-- Background corner blobs -->
       <div class="blob-corner">
         <img src="https://www.figma.com/api/mcp/asset/082f750e-816e-4599-a795-3c23de591655" alt="" />
       </div>
 
-      <!-- Gift box character -->
       <div class="gift-outer">
         <img src="Image/OBJECT.svg" alt="Gift box character" />
       </div>
 
-      <!-- Text content -->
       <div class="content">
         <img class="logo" src="Image/Logo.svg" alt="Amazon" />
         <div class="text-block">
@@ -220,12 +208,12 @@
         </div>
       </div>
 
-      <!-- Promo code -->
       <button class="promo-code" onclick="copyCode()" aria-label="Copy promo code AMZ8942">
         <span class="promo-text">AMZ8942</span>
-        <img class="copy-icon" src="https://www.figma.com/api/mcp/asset/8d0cf5f6-b144-47f3-894e-a3ace365bb4d"
-          alt="Copy" />
+        <img class="copy-icon" src="https://www.figma.com/api/mcp/asset/8d0cf5f6-b144-47f3-894e-a3ace365bb4d" alt="Copy" />
       </button>
+
+      <canvas id="scratch-canvas"></canvas>
 
     </div>
   </div>
@@ -233,15 +221,174 @@
   <div class="toast" id="toast">Copied!</div>
 
   <script>
+    /* ══════════════════════════════════════════
+       COIN CURSOR  (loaded from image)
+    ══════════════════════════════════════════ */
+    function applyCoinCursor(img) {
+      // Draw the coin scaled to 72×72 on a temp canvas
+      const size = 72;
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const x = c.getContext('2d');
+
+      // Slight drop shadow so it reads on the gold texture
+      x.save();
+      x.shadowColor   = 'rgba(0,0,0,0.4)';
+      x.shadowBlur    = 6;
+      x.shadowOffsetX = 2;
+      x.shadowOffsetY = 3;
+      x.drawImage(img, 0, 0, size, size);
+      x.restore();
+
+      // Hotspot: center of the coin face (roughly 50% x, 40% y for angled coin)
+      const hx = Math.round(size * 0.50);
+      const hy = Math.round(size * 0.40);
+      canvas.style.cursor = `url(${c.toDataURL()}) ${hx} ${hy}, crosshair`;
+    }
+
+    /* ══════════════════════════════════════════
+       GOLD TEXTURE  (per-pixel brushed metal)
+    ══════════════════════════════════════════ */
+    const canvas = document.getElementById('scratch-canvas');
+    const ctx    = canvas.getContext('2d');
+    const W = 500, H = 300;
+    canvas.width  = W;
+    canvas.height = H;
+
+    /* ══════════════════════════════════════════
+       SCRATCH MECHANIC  (rough stamp, no smooth edges)
+    ══════════════════════════════════════════ */
+
+    // Load gold texture — paint FIRST, then switch to destination-out
+    const goldImg = new Image();
+    goldImg.src = 'Image/gold-texture.png';
+    goldImg.onload = function () {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(goldImg, 0, 0, W, H);
+
+      const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.85);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(0,0,0,0.18)');
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle    = 'rgba(80,45,0,0.72)';
+      ctx.font         = '600 14px "Inter Tight", sans-serif';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🪙  Scratch here to reveal your prize', W / 2, H / 2);
+
+      ctx.globalCompositeOperation = 'destination-out';
+    };
+
+    // Set coin cursor from real image
+    const coinImg = new Image();
+    coinImg.src = 'Image/coin.png';
+    coinImg.onload = () => applyCoinCursor(coinImg);
+
+    let painting = false;
+    let lastPos  = null;
+    let revealed = false;
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const src  = e.touches ? e.touches[0] : e;
+      return {
+        x: (src.clientX - rect.left) * (W / rect.width),
+        y: (src.clientY - rect.top)  * (H / rect.height),
+      };
+    }
+
+    // Jagged irregular polygon stamp — mimics coin-on-foil scratch
+    function roughStamp(cx, cy) {
+      const verts  = 9 + Math.floor(Math.random() * 5);
+      const baseR  = 24;
+      const jitter = 11;
+      ctx.beginPath();
+      for (let i = 0; i <= verts; i++) {
+        const angle = (i / verts) * Math.PI * 2;
+        const r = baseR + (Math.random() - 0.5) * jitter * 2;
+        i === 0
+          ? ctx.moveTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r)
+          : ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Random thin flick lines for extra roughness
+      if (Math.random() < 0.3) {
+        const a = Math.random() * Math.PI * 2;
+        const l = 7 + Math.random() * 14;
+        ctx.lineWidth = 1 + Math.random() * 2.5;
+        ctx.lineCap   = 'butt';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * l, cy + Math.sin(a) * l);
+        ctx.stroke();
+      }
+    }
+
+    function scratchTo(pos) {
+      if (!lastPos) {
+        roughStamp(pos.x, pos.y);
+      } else {
+        // Stamp every 5px along the drag path — no gaps, no smooth rounding
+        const dx    = pos.x - lastPos.x;
+        const dy    = pos.y - lastPos.y;
+        const dist  = Math.sqrt(dx * dx + dy * dy);
+        const steps = Math.max(1, Math.floor(dist / 5));
+        for (let i = 1; i <= steps; i++) {
+          const t = i / steps;
+          roughStamp(lastPos.x + dx * t, lastPos.y + dy * t);
+        }
+      }
+      lastPos = pos;
+    }
+
+    let revealTimer = null;
+    function scheduleRevealCheck() {
+      clearTimeout(revealTimer);
+      revealTimer = setTimeout(checkReveal, 120);
+    }
+
+    function checkReveal() {
+      if (revealed) return;
+      const data  = ctx.getImageData(0, 0, W, H).data;
+      let cleared = 0, total = 0;
+      for (let i = 3; i < data.length; i += 24) {
+        if (data[i] < 128) cleared++;
+        total++;
+      }
+      if (cleared / total > 0.55) autoReveal();
+    }
+
+    function autoReveal() {
+      revealed = true;
+      canvas.style.transition    = 'opacity 0.7s ease';
+      canvas.style.opacity       = '0';
+      setTimeout(() => { canvas.style.pointerEvents = 'none'; }, 700);
+    }
+
+    // Mouse
+    canvas.addEventListener('mousedown', (e) => { painting = true; lastPos = null; scratchTo(getPos(e)); });
+    canvas.addEventListener('mousemove', (e) => { if (!painting) return; scratchTo(getPos(e)); scheduleRevealCheck(); });
+    canvas.addEventListener('mouseup',    () => { painting = false; lastPos = null; checkReveal(); });
+    canvas.addEventListener('mouseleave', () => { painting = false; lastPos = null; });
+
+    // Touch
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); painting = true; lastPos = null; scratchTo(getPos(e)); }, { passive: false });
+    canvas.addEventListener('touchmove',  (e) => { e.preventDefault(); if (!painting) return; scratchTo(getPos(e)); scheduleRevealCheck(); }, { passive: false });
+    canvas.addEventListener('touchend',   () => { painting = false; lastPos = null; checkReveal(); });
+
+    /* ── Copy promo ── */
     function copyCode() {
       navigator.clipboard.writeText('AMZ8942').then(() => {
-        const toast = document.getElementById('toast');
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2000);
+        const t = document.getElementById('toast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
       });
     }
   </script>
 
 </body>
-
 </html>
